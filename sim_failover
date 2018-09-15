@@ -1,5 +1,5 @@
 {
-	# Setup and read current values, "up" SIM slot will be used for roaming, "down" for home network
+	# Setup and read current values, "up" SIM slot will be used for reserve, "down" for primary network
 	:global simSlot [/system routerboard sim get sim-slot]
 	:global initTimeout 60
 	:global connectTimeout 60
@@ -23,7 +23,7 @@
 	:if ($modemInitialized=true) do={
 		# Wait for LTE interface to connect to mobile network for maximum "connectTimeout" seconds
 		:local isConnected false
-		:local signalLevel 0
+		:local info [/interface lte info lte1 once]
 		:set $i 0
 		:while ($i < $connectTimeout) do={
 			:if ([/interface lte get [find name="lte1"] running]=true) do={
@@ -34,7 +34,7 @@
 			:delay 1s
 		}
 		# Check if LTE is connected
-		if ($isConnected = false) do={
+		if ($isConnected = false || $info->"rssi" < $minimumSignalLevel do={
 			# Check which SIM slot is used
 			:if ($simSlot="down") do={
 				# If "down" (home) slot, check roaming status
