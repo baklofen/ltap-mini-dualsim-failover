@@ -1,5 +1,5 @@
 {
-	# Setup and read current values, "up" SIM slot will be used for reserve, "down" for primary network
+	# Setup and read current values, "up" SIM slot will be used for reserve, "down" for main network
 	:global simSlot [/system routerboard sim get sim-slot]
 	:global initTimeout 60
 	:global connectTimeout 60
@@ -33,7 +33,7 @@
 			:set $i ($i+1)
 			:delay 1s
 		}
-		# Check if LTE is connected
+		# Check if LTE is connected, or GSM signal is below threshold
 		if ($isConnected = false || $info->"rssi" < $minimumSignalLevel do={
 			# Check which SIM slot is used
 			:if ($simSlot="down") do={
