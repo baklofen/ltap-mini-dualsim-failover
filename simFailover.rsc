@@ -1,7 +1,6 @@
 {
-	# Setup and read current values, "up" SIM slot will be used for reserve, "down" for main network
-	:global initTimeout 60
-	:global connectTimeout 60
+	:global initTimeout 2
+	:global connectTimeout 2
 	:global minimumSignalLevel -99
 
 	:global switchSIM do={
@@ -16,45 +15,51 @@
 		}
 	}
 
-	# Wait for LTE modem to initialize for maximum "initTimeout" seconds
-	:local i 0
-	:local modemInitialized false
-	:while ($i <  $initTimeout) do={
-		:foreach n in=[/interface lte find] do={
-			:set $modemInitialized true
+	:global initialize do={
+		:log info message="init start"
+		:global initTimeout
+
+		:local i 0
+		:while ($i < $initTimeout) do={
+			:if ([:len [/interface lte find ]] > 0) do={
+				:return true
+			}			
+			:set $i ($i+1)
+			:delay 1s
 		}
-		:if ($modemInitialized=true) do={
-			:set $i $initTimeout
-		}
-		:set $i ($i+1)
-		:delay 1s
+
+		:return false
 	}
 
-	:if ($modemInitialized = true) do={	
+	:global connect do={
+		:log info message="connect start"
+		:global connectTimeout
 
-		:local isConnected false
-		:set $i 0
+		:local $i 0
 		:while ($i < $connectTimeout) do={
-			:if ([/interface lte get [find name="lte1"] running]=true) do={
-				:set $isConnected true
-				:set $i $connectTimeout
+			:if ([/interface lte get [find name="lte1"] running] = true) do={
+				:return true
 			}
 			:set $i ($i+1)
 			:delay 1s
 		}
 
-		if ($isConnected = false) do={
-			:log info message="GSM network is not connected. Trying to switch active sim slot."
-			$switchSIM
-		} else {
+		:return false
+	}
+
+	:if ([$initialize] = true) do={
+		:if ([$connect] = true) do={
 			:local info [/interface lte info lte1 once]
 			:if ($info->"rssi" < $minimumSignalLevel) do={
 				:log info message="Current RSSI ".$info->"rssi"." < ".$minimumSignalLevel.". Trying to switch active sim slot."
 				$switchSIM
 			}
+		} else={
+			:log info message="GSM network is not connected. Trying to switch active sim slot."
+			$switchSIM
 		}
 	} else={
 		:log info message="LTE modem did not appear, trying power-reset"
 		/system routerboard usb power-reset duration=5s
-	}
+	}		
 }
