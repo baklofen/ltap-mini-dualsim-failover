@@ -1,6 +1,6 @@
 {
-	:global initTimeout 2
-	:global connectTimeout 2
+	:global initTimeout 60
+	:global connectTimeout 60
 	:global minimumSignalLevel -99
 
 	:global switchSIM do={
@@ -31,11 +31,11 @@
 		:return false
 	}
 
-	:global connect do={
+	:global waitConnect do={
 		:log info message="connect start"
 		:global connectTimeout
 
-		:local $i 0
+		:local i 0
 		:while ($i < $connectTimeout) do={
 			:if ([/interface lte get [find name="lte1"] running] = true) do={
 				:return true
@@ -48,10 +48,11 @@
 	}
 
 	:if ([$initialize] = true) do={
-		:if ([$connect] = true) do={
+		:if ([$waitConnect] = true) do={
 			:local info [/interface lte info lte1 once]
-			:if ($info->"rssi" < $minimumSignalLevel) do={
-				:log info message="Current RSSI ".$info->"rssi"." < ".$minimumSignalLevel.". Trying to switch active sim slot."
+			:local rssi ($info->"rssi")
+			:if ($rssi < $minimumSignalLevel) do={
+				:log info message=("Current RSSI ".$rssi." < ".$minimumSignalLevel.". Trying to switch active sim slot.")
 				$switchSIM
 			}
 		} else={
