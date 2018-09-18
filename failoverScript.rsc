@@ -16,7 +16,6 @@
 	}
 
 	:global initialize do={
-		:log info message="init start"
 		:global initTimeout
 
 		:local i 0
@@ -32,7 +31,6 @@
 	}
 
 	:global waitConnect do={
-		:log info message="connect start"
 		:global connectTimeout
 
 		:local i 0
@@ -49,7 +47,7 @@
 
 	:if ([$initialize] = true) do={
 		:if ([$waitConnect] = true) do={
-			:local info [/interface lte info lte1 once]
+			:local info [/interface lte info lte1 once as-value]
 			:local rssi ($info->"rssi")
 			:if ($rssi < $minimumSignalLevel) do={
 				:log info message=("Current RSSI ".$rssi." < ".$minimumSignalLevel.". Trying to switch active sim slot.")
